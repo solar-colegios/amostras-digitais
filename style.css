@@ -215,8 +215,8 @@ h1, h2, h3 { margin: 0; font-family: var(--font-display); font-weight: 700; colo
   background: var(--surface-inverse-deep);
   background-image: radial-gradient(ellipse at 50% 20%, var(--surface-inverse) 0, var(--surface-inverse-deep) 75%);
   border-radius: var(--radius-lg);
-  height: min(78vh, 820px);
-  min-height: 420px;
+  height: var(--altura-palco, min(78vh, 820px)); /* calculada pelo visor para caber na tela */
+  min-height: 360px;
   display: flex; flex-direction: column;
   overflow: hidden;
   user-select: none; -webkit-user-select: none;
@@ -316,13 +316,33 @@ h1, h2, h3 { margin: 0; font-family: var(--font-display); font-weight: 700; colo
   background: #fff; overflow: hidden; scroll-snap-align: center; position: relative;
   opacity: .7; transition: opacity var(--duration-fast), border-color var(--duration-fast);
 }
+.thumbs button .par { display: flex; }                 /* páginas vistas juntas, coladas */
 .thumbs button img { display: block; height: 84px; width: auto; }
-.thumbs button span {
+.thumbs button .num {
   position: absolute; bottom: 3px; right: 4px; font-size: 10px; font-weight: 700; font-family: var(--font-display);
   background: rgba(94,18,22,.8); color: #fff; padding: 1px 6px; border-radius: var(--radius-pill);
 }
 .thumbs button:hover { opacity: 1; }
 .thumbs button.active { opacity: 1; border-color: var(--brand-secondary); }
+
+/* ---------------- dica da primeira visita */
+.dica {
+  position: absolute; z-index: 7; bottom: 70px; left: 50%; transform: translateX(-50%);
+  width: min(420px, calc(100% - 24px)); padding: 14px 16px 12px;
+  background: rgba(46,8,10,.94); color: #fff; border-radius: var(--radius-md); box-shadow: var(--shadow-lg);
+  font-size: 13.5px; line-height: 1.45; backdrop-filter: blur(6px);
+}
+.dica strong { font-family: var(--font-display); font-size: 15px; }
+.dica p { margin: 4px 0 8px; color: rgba(255,255,255,.85); }
+.dica ul { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 4px; }
+.dica li { display: flex; align-items: center; gap: 4px; }
+.dica li span { margin-left: 6px; color: rgba(255,255,255,.85); }
+.dica svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.dica-fechar {
+  position: absolute; top: 6px; right: 8px; width: 28px; height: 28px; border: 0; border-radius: 50%;
+  background: transparent; color: rgba(255,255,255,.8); font-size: 20px; line-height: 1;
+}
+.dica-fechar:hover { background: rgba(255,255,255,.14); color: #fff; }
 
 /* ---------------- info & toast */
 .viewer-info { margin-top: 16px; color: var(--text-muted); font-size: 14px; display: flex; gap: 20px; flex-wrap: wrap; }
@@ -358,7 +378,7 @@ h1, h2, h3 { margin: 0; font-family: var(--font-display); font-weight: 700; colo
   .site-link { display: none; }
   .hero-inner { padding: 40px 16px; }
   .hero-materia { padding-top: 28px; }
-  .stage { height: calc(100dvh - 160px); min-height: 380px; border-radius: var(--radius-md); }
+  .stage { border-radius: var(--radius-md); }
   .book-wrap { padding: 14px 14px 8px; }
   .side-arrow { display: none; }
   .zoom-badge { top: 8px; right: 8px; font-size: 13px; gap: 8px; padding: 4px 6px 4px 12px; }
@@ -368,6 +388,7 @@ h1, h2, h3 { margin: 0; font-family: var(--font-display); font-weight: 700; colo
   .toolbar .counter { min-width: 58px; font-size: 13px; padding: 0 2px; }
   .toolbar .sep { margin: 0 2px; }
   .thumbs button img { height: 64px; }
+  .dica { left: 8px; right: 8px; bottom: 64px; width: auto; }
   .viewer-info { display: none; }
   .viewer-head { margin-bottom: 12px; }
 }

@@ -60,13 +60,13 @@
 
 <template id="tpl-viewer">
   <section class="container viewer" data-slot="viewer">
+    <a class="btn btn-outline btn-voltar" data-slot="voltar"></a>
     <div class="viewer-head">
       <div class="viewer-title">
         <span class="overline" data-slot="overline"></span>
         <h1 data-slot="titulo"></h1>
         <span class="viewer-sub" data-slot="subtitulo"></span>
       </div>
-      <a class="btn btn-outline" data-slot="voltar">Outros livros</a>
     </div>
 
     <div class="stage" data-slot="stage">
@@ -87,6 +87,8 @@
       </div>
 
       <div class="thumbs" data-slot="thumbs" hidden></div>
+
+      <div class="dica" data-slot="dica" role="dialog" aria-label="Como usar o visor" hidden></div>
 
       <div class="toolbar" data-slot="toolbar">
         <button data-action="first" title="Primeira página" aria-label="Primeira página">

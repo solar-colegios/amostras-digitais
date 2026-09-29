@@ -131,7 +131,9 @@
     slot(view, "overline").textContent = m.nome;
     slot(view, "titulo").textContent = l.titulo;
     slot(view, "subtitulo").textContent = `${l.subtitulo} · ${l.paginas} páginas de amostra`;
-    slot(view, "voltar").href = `#/m/${m.slug}`;
+    const voltar = slot(view, "voltar");
+    voltar.href = `#/m/${m.slug}`;
+    voltar.textContent = `← Todos os livros de ${m.nome}`;
     slot(view, "info").innerHTML = `
       <span>Clique nas laterais, arraste a página ou use as setas para folhear</span>
       <span><kbd>←</kbd> <kbd>→</kbd> navegar</span>
@@ -145,6 +147,9 @@
     mount(view);
     viewer = new Viewer(l, $app.querySelector('[data-slot="viewer"]'), startPage);
   }
+
+  const VIRADA_MS = 750;
+  const CHAVE_DICA = "amostras.dica-vista";
 
   class Viewer {
     constructor(livro, root, startPage) {
@@ -172,8 +177,10 @@
       this.zoomLabel = slot(root, "zoomlabel");
       this.zoom = { z: 1, tx: 0, ty: 0 };
 
+      this.ajustarAltura(true);
       this.initFlip(startPage);
       this.bind();
+      this.mostrarDica();
       this.bindZoom();
       this.preload();
 
@@ -182,6 +189,23 @@
       first.src = this.pages[0];
       setTimeout(() => this.loadingEl.classList.add("hide"), 4000);
     }
+
+    /**
+     * Altura do palco: do topo dele até o fim da tela, para a barra de navegação ficar
+     * sempre visível. No celular a barra do navegador aparece e some ao rolar e muda a
+     * altura da janela; isso não deve redimensionar o livro, então lá a altura só é
+     * recalculada quando a largura muda (girar o aparelho).
+     */
+    ajustarAltura(forcar) {
+      const largura = window.innerWidth;
+      if (!forcar && this.toque && largura === this._largura) return false;
+      this._largura = largura;
+      const topo = this.stage.getBoundingClientRect().top + window.scrollY;
+      const h = Math.max(360, Math.min(920, window.innerHeight - topo - 14));
+      this.stage.style.setProperty("--altura-palco", `${Math.round(h)}px`);
+      return true;
+    }
+    get toque() { return window.matchMedia("(pointer: coarse)").matches; }
 
     /** livro aberto no desktop, página única em telas estreitas */
     wantPortrait() { return this.stage.clientWidth < 640; }
@@ -196,6 +220,21 @@
       this.bookW = W;
       this.bookEl.style.width = W + "px";
       this.bookEl.style.height = Math.floor((W / across) * this.ratio) + "px";
+    }
+
+    /**
+     * No livro aberto, a capa aparece sozinha na metade direita e a contracapa (quando o
+     * nº de páginas é par) na metade esquerda: desloca o livro meia página para
+     * centralizá-las, ao mesmo tempo que a página vira.
+     */
+    centralizar(alvo, animar = true) {
+      let d = 0;
+      if (!this.portraitMode) {
+        if (alvo <= 0) d = -25;
+        else if (this.n % 2 === 0 && alvo >= this.n - 1) d = 25;
+      }
+      this.bookEl.style.transition = animar ? `translate ${VIRADA_MS}ms cubic-bezier(.45,.05,.25,1)` : "none";
+      this.bookEl.style.translate = `${d}% 0`;
     }
 
     initFlip(startPage) {
@@ -216,7 +255,7 @@
         autoSize: false,
         drawShadow: true,
         maxShadowOpacity: 0.45,
-        flippingTime: 750,
+        flippingTime: VIRADA_MS,
         mobileScrollSupport: false,
         swipeDistance: 20,
         showPageCorners: false,     // sem a dobra ao aproximar o cursor da borda
@@ -238,9 +277,10 @@
       this.bookEl.appendChild(frag);
       this.flip.loadFromHTML(this.bookEl.querySelectorAll(".page"));
       this.blockClickFlip();
-      this.flip.on("flip", () => this.sync());
+      this.flip.on("flip", () => { this.centralizar(this.index); this.sync(); });
       this.flip.on("changeOrientation", () => this.sync());
       this.flip.on("init", () => this.sync());
+      this.centralizar(this.flip.getCurrentPageIndex(), false);
       this.sync();
     }
 
@@ -271,6 +311,7 @@
       this.wrap.insertBefore(el, this.loadingEl);
       this.bookEl = el;
       this.initFlip(page + 1);
+      if (this.thumbsEl.childElementCount) this.renderThumbs();
       this.hiresLoaded.clear();
       this.applyZoom();
     }
@@ -302,7 +343,8 @@
       this.counterEl.textContent = (v.length === 2 ? `${v[0] + 1}–${v[1] + 1}` : `${v[0] + 1}`) + ` / ${this.n}`;
       this.root.querySelectorAll('[data-action="prev"],[data-action="first"]').forEach((b) => (b.disabled = !this.canPrev));
       this.root.querySelectorAll('[data-action="next"],[data-action="last"]').forEach((b) => (b.disabled = !this.canNext));
-      this.thumbsEl.querySelectorAll("button").forEach((b, i) => b.classList.toggle("active", v.includes(i)));
+      this.thumbsEl.querySelectorAll("button").forEach((b) =>
+        b.classList.toggle("active", b.dataset.grupo.split(",").some((p) => v.includes(+p))));
       const active = this.thumbsEl.querySelector("button.active");
       if (active && !this.thumbsEl.hidden) active.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
       const hash = `#/l/${this.l.slug}/${this.index + 1}`;
@@ -311,10 +353,21 @@
 
     goTo(i) {
       i = Math.max(0, Math.min(i, this.n - 1));
-      if (i !== this.index) this.flip.flip(i);
+      if (i === this.index) return;
+      this.centralizar(i);
+      this.flip.flip(i);
     }
-    next() { if (this.canNext) this.flip.flipNext(); }
-    prev() { if (this.canPrev) this.flip.flipPrev(); }
+    next() {
+      if (!this.canNext) return;
+      const v = this.visible();
+      this.centralizar(v[v.length - 1] + 1);
+      this.flip.flipNext();
+    }
+    prev() {
+      if (!this.canPrev) return;
+      this.centralizar(this.visible()[0] - 1);
+      this.flip.flipPrev();
+    }
 
     preload() {
       let i = 0;
@@ -407,7 +460,11 @@
 
     onResize() {
       clearTimeout(this._rt);
-      this._rt = setTimeout(() => this.refresh(), 120);
+      this._rt = setTimeout(() => {
+        if (this.isFullscreen()) return this.refresh();
+        // no celular, mudança só de altura (barra do navegador) não mexe no livro
+        if (this.ajustarAltura(!this.toque) || !this.toque) this.refresh();
+      }, 120);
     }
 
     // ---------------------------------------------------- zoom (roda do mouse / dois dedos)
@@ -512,16 +569,58 @@
     resetZoom() { this.setZoom(1, 0, 0); }
 
     // ---------------------------------------------------- miniaturas
+    /** páginas vistas juntas: capa sozinha, depois pares (2–3, 4–5…); com uma página por vez, todas separadas */
+    grupos() {
+      if (this.portraitMode) return this.thumbs.map((_, i) => [i]);
+      const g = [[0]];
+      for (let i = 1; i < this.n; i += 2) g.push(i + 1 < this.n ? [i, i + 1] : [i]);
+      return g;
+    }
+    renderThumbs() {
+      this.thumbsEl.innerHTML = this.grupos()
+        .map((g) => {
+          const rot = g.map((i) => i + 1).join("–");
+          const imgs = g.map((i) => `<img src="${this.thumbs[i]}" alt="" loading="lazy">`).join("");
+          return `<button data-action="goto" data-page="${g[0]}" data-grupo="${g.join(",")}" aria-label="Página ${rot}"><span class="par">${imgs}</span><span class="num">${rot}</span></button>`;
+        })
+        .join("");
+      this.sync();
+    }
     toggleThumbs(btn) {
       const show = this.thumbsEl.hidden;
-      if (show && !this.thumbsEl.childElementCount) {
-        this.thumbsEl.innerHTML = this.thumbs
-          .map((t, i) => `<button data-action="goto" data-page="${i}" aria-label="Página ${i + 1}"><img src="${t}" alt="" loading="lazy"><span>${i + 1}</span></button>`)
-          .join("");
-      }
+      if (show && !this.thumbsEl.childElementCount) this.renderThumbs();
       this.thumbsEl.hidden = !show;
       btn.setAttribute("aria-pressed", String(show));
       setTimeout(() => this.refresh(), 20);
+    }
+
+    // ---------------------------------------------------- dica (só na primeira visita)
+    mostrarDica() {
+      let vista = false;
+      try { vista = !!localStorage.getItem(CHAVE_DICA); } catch {}
+      if (vista) return;
+      const el = slot(this.root, "dica");
+      const folhear = this.toque
+        ? "Deslize para o lado ou toque nas bordas do livro para virar a página; com dois dedos, amplie."
+        : "Clique nas bordas do livro, arraste a página ou use as setas ← → do teclado; a roda do mouse amplia.";
+      const ic = (d) => `<svg viewBox="0 0 24 24"><path d="${d}"/></svg>`;
+      el.innerHTML = `
+        <button class="dica-fechar" data-fechar aria-label="Fechar">×</button>
+        <strong>Como folhear</strong>
+        <p>${folhear}</p>
+        <ul>
+          <li>${ic("M18 6l-6 6 6 6M11 6l-6 6 6 6")}${ic("M6 6l6 6-6 6M13 6l6 6-6 6")}<span>primeira e última página</span></li>
+          <li>${ic("M15 6l-6 6 6 6")}${ic("M9 6l6 6-6 6")}<span>página anterior e próxima</span></li>
+          <li><svg viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="7" rx="2"/><rect x="14" y="4" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg><span>miniaturas de todas as páginas</span></li>
+          <li>${ic("M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5")}<span>tela cheia</span></li>
+        </ul>
+        <button class="btn btn-secondary btn-sm" data-fechar>Entendi</button>`;
+      el.hidden = false;
+      el.addEventListener("click", (e) => {
+        if (!e.target.closest("[data-fechar]")) return;
+        el.hidden = true;
+        try { localStorage.setItem(CHAVE_DICA, "1"); } catch {}
+      });
     }
 
     // ---------------------------------------------------- tela cheia
