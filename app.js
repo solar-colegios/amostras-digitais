@@ -181,6 +181,9 @@
       this.initFlip(startPage);
       this.bind();
       this.mostrarDica();
+      this.onScroll = () => this.marcarBarra();
+      window.addEventListener("scroll", this.onScroll, { passive: true });
+      this.marcarBarra();
       this.bindZoom();
       this.preload();
 
@@ -191,19 +194,25 @@
     }
 
     /**
-     * Altura do palco: do topo dele até o fim da tela, para a barra de navegação ficar
-     * sempre visível. No celular a barra do navegador aparece e some ao rolar e muda a
-     * altura da janela; isso não deve redimensionar o livro, então lá a altura só é
-     * recalculada quando a largura muda (girar o aparelho).
+     * No celular a barra do navegador aparece e some ao rolar e muda a altura da janela
+     * (e o 100dvh); isso não deve redimensionar o livro. Lá a altura do palco é fixada
+     * em pixels e só recalculada quando a largura muda (girar o aparelho). No computador
+     * vale a altura do CSS.
      */
     ajustarAltura(forcar) {
+      if (!this.toque) { this.stage.style.removeProperty("--altura-palco"); return true; }
       const largura = window.innerWidth;
-      if (!forcar && this.toque && largura === this._largura) return false;
+      if (!forcar && largura === this._largura) return false;
       this._largura = largura;
-      const topo = this.stage.getBoundingClientRect().top + window.scrollY;
-      const h = Math.max(360, Math.min(920, window.innerHeight - topo - 14));
+      const h = largura <= 720 ? Math.max(380, window.innerHeight - 160) : Math.max(420, Math.min(window.innerHeight * 0.78, 820));
       this.stage.style.setProperty("--altura-palco", `${Math.round(h)}px`);
       return true;
+    }
+
+    /** a barra de botões está grudada no pé da tela (sobre as páginas)? fundo mais escuro */
+    marcarBarra() {
+      const barra = slot(this.root, "toolbar"), palco = this.stage.getBoundingClientRect();
+      barra.classList.toggle("solta", palco.bottom > window.innerHeight + 1 && palco.top < window.innerHeight);
     }
     get toque() { return window.matchMedia("(pointer: coarse)").matches; }
 
@@ -463,7 +472,8 @@
       this._rt = setTimeout(() => {
         if (this.isFullscreen()) return this.refresh();
         // no celular, mudança só de altura (barra do navegador) não mexe no livro
-        if (this.ajustarAltura(!this.toque) || !this.toque) this.refresh();
+        if (this.ajustarAltura(false) || !this.toque) this.refresh();
+        this.marcarBarra();
       }, 120);
     }
 
@@ -649,6 +659,7 @@
     destroy() {
       document.removeEventListener("keydown", this.onKey);
       window.removeEventListener("resize", this.onResize);
+      window.removeEventListener("scroll", this.onScroll);
       document.removeEventListener("fullscreenchange", this.onFsChange);
       document.removeEventListener("webkitfullscreenchange", this.onFsChange);
       if (document.fullscreenElement) document.exitFullscreen().catch(() => {});

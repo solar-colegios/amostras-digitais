@@ -215,10 +215,10 @@ h1, h2, h3 { margin: 0; font-family: var(--font-display); font-weight: 700; colo
   background: var(--surface-inverse-deep);
   background-image: radial-gradient(ellipse at 50% 20%, var(--surface-inverse) 0, var(--surface-inverse-deep) 75%);
   border-radius: var(--radius-lg);
-  height: var(--altura-palco, min(78vh, 820px)); /* calculada pelo visor para caber na tela */
-  min-height: 360px;
+  height: var(--altura-palco, min(78vh, 820px)); /* no celular, fixada pelo visor */
+  min-height: 420px;
   display: flex; flex-direction: column;
-  overflow: hidden;
+  overflow: clip; /* recorta como hidden, mas deixa a barra de botões grudar no pé da tela */
   user-select: none; -webkit-user-select: none;
   box-shadow: var(--shadow-lg);
 }
@@ -288,17 +288,20 @@ h1, h2, h3 { margin: 0; font-family: var(--font-display); font-weight: 700; colo
   display: flex; align-items: center; justify-content: center; gap: 4px;
   padding: 10px 12px 14px; flex-wrap: wrap;
   background: linear-gradient(to top, rgba(0,0,0,.3), transparent);
+  /* quando o fim do visor não cabe na tela, a barra fica no pé da tela, sobre as páginas */
+  position: sticky; bottom: 0; z-index: 6;
 }
-.toolbar button, .toolbar .tb-link {
+.toolbar.solta { background: rgba(46,8,10,.82); backdrop-filter: blur(6px); }
+.toolbar > button, .toolbar > .tb-link {
   width: 40px; height: 40px; border-radius: 50%; border: 0;
   background: transparent; color: rgba(255,255,255,.92);
   display: inline-flex; align-items: center; justify-content: center;
   transition: background var(--duration-fast) var(--ease-standard);
 }
-.toolbar button:hover, .toolbar .tb-link:hover { background: rgba(255,255,255,.16); }
-.toolbar button[aria-pressed="true"] { background: var(--brand-secondary); color: var(--solar-maroon-950); }
-.toolbar button[disabled] { opacity: .3; pointer-events: none; }
-.toolbar svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.toolbar > button:hover, .toolbar > .tb-link:hover { background: rgba(255,255,255,.16); }
+.toolbar > button[aria-pressed="true"] { background: var(--brand-secondary); color: var(--solar-maroon-950); }
+.toolbar > button[disabled] { opacity: .3; pointer-events: none; }
+.toolbar > button svg, .toolbar > .tb-link svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .toolbar .counter {
   min-width: 88px; text-align: center; color: #fff; font-family: var(--font-display); font-weight: 700; font-size: 14px;
   padding: 0 6px; font-variant-numeric: tabular-nums;
@@ -327,8 +330,8 @@ h1, h2, h3 { margin: 0; font-family: var(--font-display); font-weight: 700; colo
 
 /* ---------------- dica da primeira visita */
 .dica {
-  position: absolute; z-index: 7; bottom: 70px; left: 50%; transform: translateX(-50%);
-  width: min(420px, calc(100% - 24px)); padding: 14px 16px 12px;
+  position: absolute; z-index: 7; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+  width: min(420px, calc(100vw - 24px)); max-height: 60vh; overflow-y: auto; padding: 14px 16px 12px; text-align: left;
   background: rgba(46,8,10,.94); color: #fff; border-radius: var(--radius-md); box-shadow: var(--shadow-lg);
   font-size: 13.5px; line-height: 1.45; backdrop-filter: blur(6px);
 }
@@ -378,17 +381,16 @@ h1, h2, h3 { margin: 0; font-family: var(--font-display); font-weight: 700; colo
   .site-link { display: none; }
   .hero-inner { padding: 40px 16px; }
   .hero-materia { padding-top: 28px; }
-  .stage { border-radius: var(--radius-md); }
+  .stage { height: var(--altura-palco, calc(100dvh - 160px)); min-height: 380px; border-radius: var(--radius-md); }
   .book-wrap { padding: 14px 14px 8px; }
   .side-arrow { display: none; }
   .zoom-badge { top: 8px; right: 8px; font-size: 13px; gap: 8px; padding: 4px 6px 4px 12px; }
   .toolbar { gap: 0; padding: 6px 4px 10px; flex-wrap: nowrap; }
-  .toolbar button, .toolbar .tb-link { width: 34px; height: 36px; }
-  .toolbar svg { width: 20px; height: 20px; }
+  .toolbar > button, .toolbar > .tb-link { width: 34px; height: 36px; }
+  .toolbar > button svg, .toolbar > .tb-link svg { width: 20px; height: 20px; }
   .toolbar .counter { min-width: 58px; font-size: 13px; padding: 0 2px; }
   .toolbar .sep { margin: 0 2px; }
   .thumbs button img { height: 64px; }
-  .dica { left: 8px; right: 8px; bottom: 64px; width: auto; }
   .viewer-info { display: none; }
   .viewer-head { margin-bottom: 12px; }
 }
