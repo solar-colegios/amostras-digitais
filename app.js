@@ -624,7 +624,7 @@
           <li>${ic("M18 6l-6 6 6 6M11 6l-6 6 6 6")}${ic("M6 6l6 6-6 6M13 6l6 6-6 6")}<span>primeira e última página</span></li>
           <li>${ic("M15 6l-6 6 6 6")}${ic("M9 6l6 6-6 6")}<span>página anterior e próxima</span></li>
           <li><svg viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="7" rx="2"/><rect x="14" y="4" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg><span>miniaturas de todas as páginas</span></li>
-          <li>${ic("M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5")}<span>tela cheia</span></li>
+          <li>${ic("M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5")}<span>tela cheia (ou ${this.toque ? "toque duas vezes" : "dê dois cliques"} no livro)</span></li>
         </ul>
         <button class="btn btn-secondary btn-sm" data-fechar>Entendi</button>`;
       el.hidden = false;
