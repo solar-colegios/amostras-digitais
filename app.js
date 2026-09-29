@@ -138,7 +138,7 @@
       <span>Clique nas laterais, arraste a página ou use as setas para folhear</span>
       <span><kbd>←</kbd> <kbd>→</kbd> navegar</span>
       <span><kbd>F</kbd> ou duplo clique: tela cheia</span>
-      <span>Roda do mouse: ampliar · <kbd>0</kbd> volta a 100%</span>`;
+      <span><kbd>Ctrl</kbd> + roda do mouse: ampliar · <kbd>0</kbd> volta a 100%</span>`;
     if (l.pdf) {
       const dl = slot(view, "download");
       dl.href = `livros/${l.slug}/${l.pdf}`;
@@ -482,8 +482,10 @@
     // ---------------------------------------------------- zoom (roda do mouse / dois dedos)
     bindZoom() {
       const W = this.wrap;
-      // roda do mouse: amplia em torno do cursor
+      // Ctrl + roda do mouse (ou pinça no touchpad, que chega assim): amplia em torno do
+      // cursor; a roda sozinha rola a tela normalmente, mesmo sobre o livro
       W.addEventListener("wheel", (e) => {
+        if (!e.ctrlKey) return;
         e.preventDefault();
         const factor = Math.exp(-e.deltaY * (e.deltaMode === 1 ? 0.05 : 0.0015));
         this.zoomAt(this.zoom.z * factor, e.clientX, e.clientY);
@@ -614,7 +616,7 @@
       const el = slot(this.root, "dica");
       const folhear = this.toque
         ? "Deslize para o lado ou toque nas bordas do livro para virar a página; com dois dedos, amplie."
-        : "Clique nas bordas do livro, arraste a página ou use as setas ← → do teclado; a roda do mouse amplia.";
+        : "Clique nas bordas do livro, arraste a página ou use as setas ← → do teclado; Ctrl + roda do mouse amplia.";
       const ic = (d) => `<svg viewBox="0 0 24 24"><path d="${d}"/></svg>`;
       el.innerHTML = `
         <button class="dica-fechar" data-fechar aria-label="Fechar">×</button>
