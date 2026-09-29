@@ -352,6 +352,7 @@
       this.counterEl.textContent = (v.length === 2 ? `${v[0] + 1}–${v[1] + 1}` : `${v[0] + 1}`) + ` / ${this.n}`;
       this.root.querySelectorAll('[data-action="prev"],[data-action="first"]').forEach((b) => (b.disabled = !this.canPrev));
       this.root.querySelectorAll('[data-action="next"],[data-action="last"]').forEach((b) => (b.disabled = !this.canNext));
+      if (this.limparZonas && (!this.canPrev || !this.canNext)) this.limparZonas();
       this.thumbsEl.querySelectorAll("button").forEach((b) =>
         b.classList.toggle("active", b.dataset.grupo.split(",").some((p) => v.includes(+p))));
       const active = this.thumbsEl.querySelector("button.active");
@@ -436,6 +437,24 @@
         e.preventDefault();
         this.toggleFullscreen();
       });
+
+      // com o mouse sobre uma área clicável (25% de cada lado), ela e a seta se destacam
+      const zonas = { prev: this.wrap.querySelector(".zona.prev"), next: this.wrap.querySelector(".zona.next") };
+      const setas = { prev: this.root.querySelector(".side-arrow.prev"), next: this.root.querySelector(".side-arrow.next") };
+      const destacar = (lado) => {
+        for (const k of ["prev", "next"]) {
+          zonas[k].classList.toggle("ativa", k === lado);
+          setas[k].classList.toggle("na-zona", k === lado);
+        }
+      };
+      this.stage.addEventListener("mousemove", (e) => {
+        if (this.toque) return;           // toque também gera "mousemove": só com mouse
+        if (this.zoom.z > 1.01 || !(e.target.closest(".book-wrap") || e.target.closest(".side-arrow"))) return destacar(null);
+        const r = this.stage.getBoundingClientRect(), x = (e.clientX - r.left) / r.width;
+        destacar(x <= 0.25 && this.canPrev ? "prev" : x >= 0.75 && this.canNext ? "next" : null);
+      });
+      this.stage.addEventListener("mouseleave", () => destacar(null));
+      this.limparZonas = () => destacar(null);
 
       document.addEventListener("keydown", this.onKey);
       window.addEventListener("resize", this.onResize);

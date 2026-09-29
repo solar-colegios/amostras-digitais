@@ -277,7 +277,17 @@ h1, h2, h3 { margin: 0; font-family: var(--font-display); font-weight: 700; colo
   display: flex; align-items: center; justify-content: center;
   transition: background var(--duration-fast) var(--ease-standard), opacity var(--duration-fast);
 }
-.side-arrow:hover { background: var(--brand-secondary); color: var(--solar-maroon-950); }
+.side-arrow { transition: background var(--duration-base) var(--ease-standard), color var(--duration-base), transform var(--duration-base) var(--ease-standard), opacity var(--duration-fast); }
+.side-arrow:hover, .side-arrow.na-zona { background: var(--brand-secondary); color: var(--solar-maroon-950); transform: translateY(-50%) scale(1.12); }
+
+/* áreas clicáveis (25% de cada lado): retângulo branco bem transparente com o mouse sobre ela */
+.zona {
+  position: absolute; top: 0; bottom: 0; width: 25%; z-index: 4; pointer-events: none;
+  background: rgba(255,255,255,.07); opacity: 0; transition: opacity var(--duration-base) var(--ease-standard);
+}
+.zona.prev { left: 0; border-radius: 0 var(--radius-md) var(--radius-md) 0; }
+.zona.next { right: 0; border-radius: var(--radius-md) 0 0 var(--radius-md); }
+.zona.ativa { opacity: 1; }
 .side-arrow.prev { left: 12px; }
 .side-arrow.next { right: 12px; }
 .side-arrow svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
