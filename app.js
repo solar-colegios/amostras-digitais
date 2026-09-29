@@ -429,6 +429,8 @@
         }
         down = null;
       });
+      // o navegador assumiu o gesto (rolagem vertical da tela): não é toque nem deslize
+      this.wrap.addEventListener("pointercancel", () => { down = null; });
       this.wrap.addEventListener("dblclick", (e) => {
         if (e.target.closest("button")) return;
         e.preventDefault();
