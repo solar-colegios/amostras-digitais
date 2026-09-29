@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Amostras – Solar Colégios</title>
+<meta name="description" content="Folheie amostras das Coleções Didáticas Solar Colégios: Religião, Quero querer, História, Ciências e Geografia.">
+<meta name="theme-color" content="#be1e2d">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" type="image/png" href="assets/logo-solar.png">
+</head>
+<body>
+
+<header class="topbar" id="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="#/" aria-label="Solar Colégios – Amostras">
+      <img src="assets/logo-solar.png" alt="Solar Colégios">
+    </a>
+    <nav class="crumbs" id="crumbs" aria-label="Navegação"></nav>
+    <a class="site-link" href="https://solarcolegios.org.br" target="_blank" rel="noopener">Voltar ao site</a>
+  </div>
+</header>
+
+<main id="app" class="app" aria-live="polite"></main>
+
+<footer class="footer" id="footer">
+  <div class="footer-inner">
+    <img src="assets/logo-solar-white.png" alt="Solar Colégios" class="footer-logo">
+    <p>Material de amostra das Coleções Didáticas Solar Colégios. Reprodução proibida.</p>
+    <small>Copyright © Solar Colégios. Todos os direitos reservados.</small>
+  </div>
+</footer>
+
+<!-- Templates -->
+<template id="tpl-home">
+  <section class="hero hero-brand">
+    <div class="hero-inner">
+      <span class="overline">Coleções Didáticas</span>
+      <h1>Amostras dos livros</h1>
+      <p>Escolha uma matéria para folhear amostras dos livros do aluno, do professor e dos pais, e dos recursos didáticos.</p>
+    </div>
+  </section>
+  <section class="container">
+    <div class="grid grid-materias" data-slot="materias"></div>
+  </section>
+</template>
+
+<template id="tpl-materia">
+  <section class="container hero-materia">
+    <a class="btn btn-outline btn-voltar" data-slot="voltar-topo">← Todas as matérias</a>
+    <span class="overline" data-slot="pill"></span>
+    <h1 data-slot="nome"></h1>
+    <p data-slot="desc"></p>
+  </section>
+  <section class="container" data-slot="anos"></section>
+</template>
+
+<template id="tpl-viewer">
+  <section class="container viewer" data-slot="viewer">
+    <div class="viewer-head">
+      <div class="viewer-title">
+        <span class="overline" data-slot="overline"></span>
+        <h1 data-slot="titulo"></h1>
+        <span class="viewer-sub" data-slot="subtitulo"></span>
+      </div>
+      <a class="btn btn-outline" data-slot="voltar">Outros livros</a>
+    </div>
+
+    <div class="stage" data-slot="stage">
+      <button class="side-arrow prev" data-action="prev" aria-label="Página anterior">
+        <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+      <div class="book-wrap" data-slot="bookwrap">
+        <div class="book" data-slot="book"></div>
+        <div class="loading" data-slot="loading"><span class="spinner"></span> Carregando amostra…</div>
+      </div>
+      <button class="side-arrow next" data-action="next" aria-label="Próxima página">
+        <svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+      </button>
+
+      <div class="zoom-badge" data-slot="zoombadge" hidden>
+        <span data-slot="zoomlabel">100%</span>
+        <button class="btn btn-secondary btn-sm" data-action="zoom-reset">Voltar a 100%</button>
+      </div>
+
+      <div class="thumbs" data-slot="thumbs" hidden></div>
+
+      <div class="toolbar" data-slot="toolbar">
+        <button data-action="first" title="Primeira página" aria-label="Primeira página">
+          <svg viewBox="0 0 24 24"><path d="M18 6l-6 6 6 6M11 6l-6 6 6 6"/></svg>
+        </button>
+        <button data-action="prev" title="Anterior" aria-label="Página anterior">
+          <svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>
+        </button>
+        <span class="counter" data-slot="counter">–</span>
+        <button data-action="next" title="Próxima" aria-label="Próxima página">
+          <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+        </button>
+        <button data-action="last" title="Última página" aria-label="Última página">
+          <svg viewBox="0 0 24 24"><path d="M6 6l6 6-6 6M13 6l6 6-6 6"/></svg>
+        </button>
+
+        <span class="sep"></span>
+
+        <button data-action="thumbs" title="Miniaturas" aria-label="Miniaturas" aria-pressed="false">
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="7" rx="2"/><rect x="14" y="4" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>
+        </button>
+        <button data-action="fullscreen" title="Tela cheia (F)" aria-label="Tela cheia">
+          <svg viewBox="0 0 24 24"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg>
+        </button>
+        <a data-slot="download" class="tb-link" title="Baixar PDF" aria-label="Baixar PDF" download hidden>
+          <svg viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M4 19h16"/></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+  <section class="container viewer-info" data-slot="info"></section>
+</template>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="vendor/page-flip.browser.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
