@@ -149,6 +149,7 @@
   }
 
   const VIRADA_MS = 750;
+  const sorteio = (a, b) => a + Math.random() * (b - a);
   const CHAVE_DICA = "amostras.dica-vista";
 
   class Viewer {
@@ -242,7 +243,8 @@
         if (alvo <= 0) d = -25;
         else if (this.n % 2 === 0 && alvo >= this.n - 1) d = 25;
       }
-      this.bookEl.style.transition = animar ? `translate ${VIRADA_MS}ms cubic-bezier(.45,.05,.25,1)` : "none";
+      const ms = this.variacao ? this.variacao.ms : VIRADA_MS;
+      this.bookEl.style.transition = animar ? `translate ${ms}ms cubic-bezier(.45,.05,.25,1)` : "none";
       this.bookEl.style.translate = `${d}% 0`;
     }
 
@@ -301,13 +303,85 @@
     blockClickFlip() {
       const fc = this.flip.flipController;
       if (!fc || fc.__patched) return;
-      const origFlip = fc.flip.bind(fc);
-      fc.flip = (pos) => { if (fc.__allow) return origFlip(pos); };
+      fc.flip = (pos) => { if (fc.__allow) return this.virar(fc, pos); };
       for (const name of ["flipNext", "flipPrev"]) {
         const orig = fc[name].bind(fc);
         fc[name] = (corner) => { fc.__allow = true; try { return orig(corner); } finally { fc.__allow = false; } };
       }
       fc.__patched = true;
+    }
+
+    /**
+     * Sorteia pequenas variações para a próxima virada (canto de onde a página sai,
+     * altura da dobra, curva do trajeto, ritmo e duração), para ela não ser sempre igual.
+     */
+    sortearVariacao() {
+      this.variacao = {
+        canto: Math.random() < 0.6 ? "bottom" : "top",
+        ms: Math.round(VIRADA_MS * sorteio(0.88, 1.14)),
+        dobra: sorteio(0.6, 1.5),   // quanto o canto já sai levantado (× 1/10 da altura)
+        recuo: sorteio(0.7, 1.35),  // quanto o canto sai para dentro da página
+        curva: sorteio(0.03, 0.15), // arco do trajeto do canto (× altura)
+        fim: sorteio(0, 0.06),      // o canto termina um pouco acima/abaixo da borda
+        ritmo: sorteio(1.35, 1.9),  // aceleração no começo e freada no fim
+      };
+      return this.variacao;
+    }
+
+    /**
+     * Substitui a virada do page-flip (trajeto reto e ritmo constante) por um trajeto
+     * curvo com aceleração e freada, com as variações sorteadas. No modo de uma página,
+     * voltar é a virada para a frente tocada ao contrário: a página anterior volta por
+     * cima da atual, dobrando, em vez de deslizar de lado.
+     */
+    virar(fc, pos) {
+      const v = this.variacao || this.sortearVariacao();
+      this.variacao = null;
+      if (fc.calc !== null) fc.render.finishAnimation();
+      if (!fc.start(pos)) return;
+      const r = fc.getBoundsRect(), w = r.pageWidth, h = r.height;
+      let baixo = fc.calc.getCorner() === "bottom";
+      const borda = baixo ? h : 0, sinal = baixo ? -1 : 1; // sinal: para dentro da página
+      const lift = (h / 10) * v.dobra;
+      const levantado = { x: w - lift * v.recuo, y: borda + sinal * lift };
+      const virado = { x: -w, y: borda + sinal * h * v.fim };
+      const arco = sinal * h * v.curva * (baixo ? 1 : 0.6);
+
+      const voltarRetrato = fc.render.getOrientation() === "portrait" && fc.calc.getDirection() === 1;
+      if (voltarRetrato) {
+        // mostra a página anterior e a "desvira": o canto vai de virado até assentar
+        const pc = this.flip.getPageCollection();
+        fc.reset();
+        pc.setCurrentSpreadIndex(pc.getCurrentSpreadIndex() - 1);
+        pc.showSpread();
+        const rr = fc.render.getRect();
+        if (!fc.start({ x: rr.left + 2 * rr.pageWidth - 10, y: baixo ? rr.height - 2 : 1 })) return;
+      }
+      fc.setState("flipping");
+      const [a, b] = voltarRetrato ? [virado, { x: w, y: borda }] : [levantado, virado];
+      const pontos = this.trajeto(a, b, arco, v.ritmo, Math.max(40, Math.round(v.ms / 8)));
+      fc.calc.calc(pontos[0]);
+      fc.render.startAnimation(pontos.map((p) => () => fc.do(p)), v.ms, () => {
+        if (!fc.calc) return;
+        if (!voltarRetrato) fc.calc.getDirection() === 1 ? fc.app.turnToPrevPage() : fc.app.turnToNextPage();
+        fc.render.setBottomPage(null);
+        fc.render.setFlippingPage(null);
+        fc.render.clearShadow();
+        fc.setState("read");
+        fc.reset();
+      });
+    }
+
+    /** pontos de a até b numa curva (arco em y no meio), com ritmo suave nas pontas */
+    trajeto(a, b, arco, ritmo, n) {
+      const ease = (t) => (t < 0.5 ? Math.pow(2 * t, ritmo) / 2 : 1 - Math.pow(2 * (1 - t), ritmo) / 2);
+      const c = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 + 2 * arco };
+      const pts = [];
+      for (let k = 0; k <= n; k++) {
+        const t = ease(k / n), u = 1 - t;
+        pts.push({ x: u * u * a.x + 2 * u * t * c.x + t * t * b.x, y: u * u * a.y + 2 * u * t * c.y + t * t * b.y });
+      }
+      return pts;
     }
 
     /** recria o livro ao trocar entre 1 e 2 páginas (girar o celular, redimensionar) */
@@ -364,19 +438,21 @@
     goTo(i) {
       i = Math.max(0, Math.min(i, this.n - 1));
       if (i === this.index) return;
+      const { canto } = this.sortearVariacao();
       this.centralizar(i);
-      this.flip.flip(i);
+      this.flip.flip(i, canto);
     }
     next() {
       if (!this.canNext) return;
-      const v = this.visible();
+      const v = this.visible(), { canto } = this.sortearVariacao();
       this.centralizar(v[v.length - 1] + 1);
-      this.flip.flipNext();
+      this.flip.flipNext(canto);
     }
     prev() {
       if (!this.canPrev) return;
+      const { canto } = this.sortearVariacao();
       this.centralizar(this.visible()[0] - 1);
-      this.flip.flipPrev();
+      this.flip.flipPrev(canto);
     }
 
     preload() {

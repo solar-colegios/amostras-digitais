@@ -201,6 +201,7 @@ h1, h2, h3 { margin: 0; font-family: var(--font-display); font-weight: 700; colo
    VIEWER
    ============================================================ */
 .viewer { padding-top: 32px; }
+.container.viewer, .container.viewer-info { max-width: 1480px; } /* visor mais largo que o resto do site */
 .viewer-head {
   display: flex; align-items: flex-end; justify-content: space-between; gap: 16px;
   margin-bottom: 16px; flex-wrap: wrap;
@@ -214,7 +215,7 @@ h1, h2, h3 { margin: 0; font-family: var(--font-display); font-weight: 700; colo
   background: var(--surface-inverse-deep);
   background-image: radial-gradient(ellipse at 50% 20%, var(--surface-inverse) 0, var(--surface-inverse-deep) 75%);
   border-radius: var(--radius-lg);
-  height: var(--altura-palco, min(78vh, 820px)); /* no celular, fixada pelo visor */
+  height: var(--altura-palco, min(calc(100vh - 88px), 1150px)); /* no celular, fixada pelo visor */
   min-height: 420px;
   display: flex; flex-direction: column;
   overflow: clip; /* recorta como hidden, mas deixa a barra de botões grudar no pé da tela */
@@ -227,7 +228,7 @@ h1, h2, h3 { margin: 0; font-family: var(--font-display); font-weight: 700; colo
 .book-wrap {
   flex: 1; position: relative; min-height: 0;
   display: flex; align-items: center; justify-content: center;
-  padding: 28px 72px 12px;
+  padding: 18px 68px 6px;
   touch-action: pan-y; /* arrastar para cima/baixo rola a tela; o lado vira a página e a pinça amplia (visor) */
   overflow: hidden;
 }
