@@ -28,6 +28,9 @@
   const tpl = (id) => document.getElementById(id).content.cloneNode(true);
   const slot = (root, name) => root.querySelector(`[data-slot="${name}"]`);
   const ordinal = (n) => (n <= 9 ? `${n}º ano` : `${n - 9}ª série EM`);   // 10…12 = Ensino Médio
+  // nomes do ano vindos do catálogo (ex.: "Volume 1 EM" em Religião); curto nos botões e no caminho
+  const anoCurto = (l) => l.anoCurto || ordinal(l.ano);
+  const anoNome = (l) => l.anoNome || anoCurto(l);
 
   let toastTimer;
   function toast(msg) {
@@ -98,11 +101,105 @@
               </a>`
             )
             .join("");
-          return `<div class="ano-bloco"><h2>${ordinal(ano)}</h2><div class="grid grid-livros">${cards}</div></div>`;
+          const l0 = livros.find((l) => l.ano === ano);
+          return `<div class="ano-bloco" id="ano-${ano}" data-ano="${ano}"><h2>${esc(anoNome(l0))}</h2><div class="grid grid-livros">${cards}</div></div>`;
         })
         .join("") + `<div class="voltar-rodape"><a class="btn btn-primary" href="#/">Voltar às matérias</a></div>`;
+      if (anos.length > 1) {
+        slot(view, "anos-trilho").innerHTML = anos
+          .map((ano) => `<button type="button" data-ano="${ano}">${esc(anoCurto(livros.find((l) => l.ano === ano)))}</button>`)
+          .join("");
+        slot(view, "anos-nav").hidden = false;
+      }
     }
     mount(view);
+    ligarBarraAnos();
+  }
+
+  /**
+   * Barra com os anos da matéria: fica grudada no alto da tela ao descer; clicar num ano
+   * leva até ele; o ano que está na tela fica marcado; se não couber, a linha rola para
+   * o lado (com o dedo, com a roda do mouse ou arrastando com o mouse).
+   */
+  let pararBarraAnos = null;
+  function ligarBarraAnos() {
+    if (pararBarraAnos) { pararBarraAnos(); pararBarraAnos = null; }
+    const nav = $app.querySelector('[data-slot="anos-nav"]');
+    if (!nav || nav.hidden) return;
+    const trilho = nav.querySelector(".anos-trilho");
+    const blocos = [...$app.querySelectorAll(".ano-bloco")];
+    const topbar = document.getElementById("topbar");
+
+    const topo = () => (getComputedStyle(topbar).position === "sticky" ? topbar.offsetHeight : 0);
+    let atual = null, arrastando = false, inicio = null, moveu = false;
+    const marcar = () => {
+      const linha = topo() + nav.offsetHeight + 40;
+      let ano = blocos[0].dataset.ano;
+      for (const b of blocos) if (b.getBoundingClientRect().top <= linha) ano = b.dataset.ano;
+      // no fim da página, o último ano pode não chegar à linha
+      if (window.scrollY > 0 && window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) ano = blocos[blocos.length - 1].dataset.ano;
+      nav.classList.toggle("grudada", window.scrollY > 0 && nav.getBoundingClientRect().top <= topo() + 0.5);
+      if (ano === atual) return;
+      atual = ano;
+      for (const bt of trilho.children) {
+        const sim = bt.dataset.ano === ano;
+        bt.classList.toggle("ativo", sim);
+        if (sim) bt.setAttribute("aria-current", "true"); else bt.removeAttribute("aria-current");
+        if (sim && !arrastando) trilho.scrollTo({ left: bt.offsetLeft - trilho.offsetLeft - (trilho.clientWidth - bt.offsetWidth) / 2, behavior: "smooth" });
+      }
+    };
+    const posicionar = () => {
+      document.documentElement.style.setProperty("--altura-topo", `${topo()}px`);
+      trilho.classList.toggle("transborda", trilho.scrollWidth > trilho.clientWidth + 1);
+      marcar();
+    };
+
+    // arrastar a linha para o lado com o mouse (no toque, a rolagem é do próprio navegador)
+    trilho.addEventListener("pointerdown", (e) => {
+      if (e.pointerType !== "mouse" || e.button !== 0) return;
+      inicio = { x: e.clientX, left: trilho.scrollLeft }; moveu = false;
+    });
+    const mover = (e) => {
+      if (!inicio) return;
+      const dx = e.clientX - inicio.x;
+      if (!moveu && Math.abs(dx) < 5) return;
+      moveu = arrastando = true;
+      trilho.classList.add("arrastando");
+      trilho.scrollLeft = inicio.left - dx;
+    };
+    const soltar = () => {
+      if (!inicio) return;
+      inicio = null; trilho.classList.remove("arrastando");
+      setTimeout(() => { arrastando = false; moveu = false; }, 0);
+    };
+    window.addEventListener("pointermove", mover);
+    window.addEventListener("pointerup", soltar);
+    // roda do mouse na vertical sobre a linha: rola a linha, se ela transborda
+    trilho.addEventListener("wheel", (e) => {
+      if (!trilho.classList.contains("transborda") || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+      const antes = trilho.scrollLeft;
+      trilho.scrollLeft += e.deltaY;
+      if (trilho.scrollLeft !== antes) e.preventDefault();
+    }, { passive: false });
+
+    trilho.addEventListener("click", (e) => {
+      const bt = e.target.closest("button[data-ano]");
+      if (!bt || moveu) return;
+      const bloco = document.getElementById(`ano-${bt.dataset.ano}`);
+      const y = bloco.getBoundingClientRect().top + window.scrollY - topo() - nav.offsetHeight - 16;
+      window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
+    });
+
+    const onScroll = () => marcar();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", posicionar);
+    posicionar();
+    pararBarraAnos = () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", posicionar);
+      window.removeEventListener("pointermove", mover);
+      window.removeEventListener("pointerup", soltar);
+    };
   }
 
   function renderNotFound() {
@@ -115,6 +212,7 @@
 
   function mount(node) {
     if (viewer) { viewer.destroy(); viewer = null; }
+    if (pararBarraAnos) { pararBarraAnos(); pararBarraAnos = null; }
     $app.replaceChildren(node);
     window.scrollTo({ top: 0 });
   }
@@ -125,7 +223,7 @@
     if (!l) return renderNotFound();
     const m = materiaBySlug(l.materia);
     document.title = `${l.titulo} (${l.publicoNome}) – Amostras Solar Colégios`;
-    setCrumbs([{ label: "Matérias", href: "#/" }, { label: m.nome, href: `#/m/${m.slug}` }, { label: `${ordinal(l.ano)} · ${l.publicoNome}` }]);
+    setCrumbs([{ label: "Matérias", href: "#/" }, { label: m.nome, href: `#/m/${m.slug}` }, { label: `${anoCurto(l)} · ${l.publicoNome}` }]);
 
     const view = tpl("tpl-viewer");
     slot(view, "overline").textContent = m.nome;

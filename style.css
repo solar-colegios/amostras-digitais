@@ -164,6 +164,43 @@ h1, h2, h3 { margin: 0; font-family: var(--font-display); font-weight: 700; colo
 .card-materia.vazio:hover { transform: none; box-shadow: none; }
 
 .ano-bloco { margin: 32px 0 0; }
+
+/* ---------------- barra de anos (página da matéria): gruda no alto ao descer */
+.anos-nav {
+  position: sticky; top: var(--altura-topo, 0); z-index: 9;
+  margin-top: 20px; padding: 10px 0;
+  background: color-mix(in srgb, var(--surface-page) 92%, transparent);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid transparent;
+  transition: border-color var(--duration-base), box-shadow var(--duration-base);
+}
+.anos-nav.grudada { border-bottom-color: var(--border-subtle); box-shadow: 0 6px 16px -12px rgba(0,0,0,.35); }
+.anos-trilho {
+  display: flex; gap: 8px; flex-wrap: nowrap;
+  overflow-x: auto; overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  user-select: none; -webkit-user-select: none;
+}
+.anos-trilho::-webkit-scrollbar { display: none; }
+/* quando não cabe: esmaece as pontas para indicar que dá para arrastar */
+.anos-trilho.transborda {
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 14px, #000 calc(100% - 28px), transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 14px, #000 calc(100% - 28px), transparent 100%);
+  padding: 0 28px 0 6px; cursor: grab;
+}
+.anos-trilho.arrastando { cursor: grabbing; }
+.anos-trilho.arrastando button { pointer-events: none; }
+.anos-trilho button {
+  flex: none; white-space: nowrap;
+  font: inherit; font-weight: 700; font-size: 15px; line-height: 1;
+  padding: 10px 16px; border-radius: 999px;
+  border: 1.5px solid var(--border-subtle); background: #fff; color: inherit;
+  cursor: pointer;
+  transition: background var(--duration-base), color var(--duration-base), border-color var(--duration-base);
+}
+.anos-trilho button:hover { border-color: var(--brand-primary); color: var(--brand-primary); }
+.anos-trilho button.ativo { background: var(--brand-primary); border-color: var(--brand-primary); color: #fff; }
+.anos-nav + .container .ano-bloco:first-child { margin-top: 20px; }
 .ano-bloco h2 { font-size: 24px; margin-bottom: 16px; display: flex; align-items: center; gap: 14px; }
 .ano-bloco h2::after { content: ""; flex: 1; height: 1px; background: var(--border-subtle); }
 .grid-livros { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
