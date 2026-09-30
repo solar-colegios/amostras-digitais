@@ -304,6 +304,13 @@
       const fc = this.flip.flipController;
       if (!fc || fc.__patched) return;
       fc.flip = (pos) => { if (fc.__allow) return this.virar(fc, pos); };
+      // arrasto com o mouse: a página é puxada do ponto onde foi pega (ver puxar)
+      fc.fold = (t) => {
+        fc.setState("user_fold");
+        if (fc.calc === null) fc.__pega = fc.start(t) ? fc.render.convertToPage(t) : null;
+        const p = fc.render.convertToPage(t);
+        fc.do(fc.__pega ? this.puxar(fc, p, fc.__pega) : p);
+      };
       for (const name of ["flipNext", "flipPrev"]) {
         const orig = fc[name].bind(fc);
         fc[name] = (corner) => { fc.__allow = true; try { return orig(corner); } finally { fc.__allow = false; } };
@@ -370,6 +377,22 @@
         fc.setState("read");
         fc.reset();
       });
+    }
+
+    /**
+     * O page-flip trata a posição do mouse como o canto da página, então ela sempre vem
+     * pelo canto. Aqui, pega longe do canto (no meio da altura), a borda acompanha a mão
+     * na altura em que foi pega e a dobra fica quase vertical; perto do canto, vale o
+     * comportamento original, com transição suave entre os dois.
+     */
+    puxar(fc, p, pega) {
+      const r = fc.getBoundsRect(), w = r.pageWidth, h = r.height;
+      const canto = fc.calc.getCorner() === "bottom" ? h : 0;
+      let g = Math.min(1, Math.abs(pega.y - canto) / (h / 2)); // 0 no canto, 1 no meio
+      g = g * g * (3 - 2 * g);
+      const x = p.x + (w - pega.x) * g;
+      const y = p.y + g * (canto + (p.y - pega.y) * 0.35 - p.y);
+      return { x, y };
     }
 
     /** pontos de a até b numa curva (arco em y no meio), com ritmo suave nas pontas */
