@@ -225,6 +225,7 @@ h1, h2, h3 { margin: 0; font-family: var(--font-display); font-weight: 700; colo
 .card-livro .tag.professor { background: var(--brand-primary); color: #fff; }
 .card-livro .tag.pai { background: var(--surface-inverse); color: #fff; }
 .card-livro .tag.recursos { background: var(--solar-ink-700); color: #fff; }
+.card-livro .tag.exercicios { background: var(--brand-secondary); color: var(--solar-maroon-950); }
 .card-livro strong { font-family: var(--font-display); font-size: 16px; color: var(--text-heading); line-height: 1.25; }
 .card-livro small { color: var(--text-muted); font-size: 13px; }
 

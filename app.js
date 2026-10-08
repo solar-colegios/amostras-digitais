@@ -18,6 +18,8 @@
     historia: "Da Antiguidade aos dias de hoje, com olhar humanista.",
     ciencias: "Investigação, curiosidade e cuidado com a criação.",
     geografia: "O mundo, o Brasil e o lugar onde vivemos.",
+    "cadernos-historico-geograficos": "Uma proposta integrada que conecta História e Geografia a partir de literatura e arte.",
+    "matematica-cingapura": "O método de Matemática usado em Cingapura, adaptado às exigências do programa oficial.",
   };
 
   let catalog = null;
