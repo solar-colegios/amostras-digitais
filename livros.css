@@ -446,3 +446,6 @@ h1, h2, h3 { margin: 0; font-family: var(--font-display); font-weight: 700; colo
   .card-materia, .card-livro, .btn, .toast { transition: none; }
 }
 
+
+/* link forte dentro de um aviso (no lugar do style inline) */
+.link-forte { color: var(--brand-primary); font-weight: 700; }
