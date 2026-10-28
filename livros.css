@@ -284,6 +284,14 @@ h1, h2, h3 { margin: 0; font-family: var(--font-display); font-weight: 700; colo
 }
 
 /* livro (page-flip) */
+/* As regras de base do page-flip ficam aqui: ele as poria num <style>, que a CSP da plataforma recusa
+   (a cópia em vendor/ não as injeta mais). */
+.stf__parent { position: relative; display: block; box-sizing: border-box; transform: translateZ(0); -ms-touch-action: pan-y; touch-action: pan-y; }
+.sft__wrapper { position: relative; width: 100%; box-sizing: border-box; }
+.stf__parent canvas { position: absolute; width: 100%; height: 100%; left: 0; top: 0; }
+.stf__block { position: absolute; width: 100%; height: 100%; box-sizing: border-box; perspective: 2000px; }
+.stf__item { display: none; position: absolute; transform-style: preserve-3d; }
+.stf__outerShadow, .stf__innerShadow, .stf__hardShadow, .stf__hardInnerShadow { position: absolute; left: 0; top: 0; }
 .book { position: relative; max-width: 100%; }
 .book .stf__wrapper { position: relative; width: 100%; height: 100%; }
 .book .stf__block { position: absolute; inset: 0; background: transparent; }
