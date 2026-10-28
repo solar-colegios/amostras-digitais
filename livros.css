@@ -369,7 +369,11 @@ h1, h2, h3 { margin: 0; font-family: var(--font-display); font-weight: 700; colo
   display: flex; gap: 10px; padding: 10px 16px 4px; overflow-x: auto;
   scroll-snap-type: x proximity; scrollbar-width: thin;
   background: rgba(0,0,0,.22);
+  user-select: none; -webkit-user-select: none;
 }
+/* arrastando com o mouse (livros.js): sem o encaixe, que brigaria com o arrasto */
+.thumbs.arrastando { cursor: grabbing; scroll-snap-type: none; }
+.thumbs.arrastando button { pointer-events: none; }
 .thumbs button {
   flex: 0 0 auto; border: 2px solid transparent; border-radius: 6px; padding: 0;
   background: #fff; overflow: hidden; scroll-snap-align: center; position: relative;

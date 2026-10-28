@@ -755,6 +755,35 @@ window.SolarLivros = (() => {
       this.stage.addEventListener("mouseleave", () => destacar(null));
       this.limparZonas = () => destacar(null);
 
+      // miniaturas: arrastar a fileira para o lado com o mouse, também pegando nelas (no toque,
+      // a rolagem é do próprio navegador); um arrasto não conta como clique
+      const T = this.thumbsEl;
+      let pega = null, arrastou = false;
+      T.addEventListener("pointerdown", (e) => {
+        arrastou = false;
+        if (e.pointerType !== "mouse" || e.button !== 0) return;
+        const r = T.getBoundingClientRect();
+        if (e.clientY - r.top - T.clientTop >= T.clientHeight) return; // na barra de rolagem
+        pega = { x: e.clientX, left: T.scrollLeft };
+      });
+      T.addEventListener("dragstart", (e) => e.preventDefault());
+      T.addEventListener("click", (e) => { if (arrastou) e.stopPropagation(); }, true);
+      this.onThumbsMove = (e) => {
+        if (!pega) return;
+        const dx = e.clientX - pega.x;
+        if (!arrastou && Math.abs(dx) < 5) return;
+        arrastou = true;
+        T.classList.add("arrastando");
+        T.scrollLeft = pega.left - dx;
+      };
+      this.onThumbsUp = () => {
+        if (!pega) return;
+        pega = null;
+        T.classList.remove("arrastando");
+      };
+      window.addEventListener("pointermove", this.onThumbsMove);
+      window.addEventListener("pointerup", this.onThumbsUp);
+
       document.addEventListener("keydown", this.onKey);
       window.addEventListener("resize", this.onResize);
       document.addEventListener("fullscreenchange", this.onFsChange);
@@ -982,6 +1011,8 @@ window.SolarLivros = (() => {
       document.removeEventListener("keydown", this.onKey);
       window.removeEventListener("resize", this.onResize);
       window.removeEventListener("scroll", this.onScroll);
+      window.removeEventListener("pointermove", this.onThumbsMove);
+      window.removeEventListener("pointerup", this.onThumbsUp);
       document.removeEventListener("fullscreenchange", this.onFsChange);
       document.removeEventListener("webkitfullscreenchange", this.onFsChange);
       if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
